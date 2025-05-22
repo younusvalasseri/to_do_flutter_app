@@ -1,23 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:todo_app_flutter/core/constants/app_colors.dart';
+import 'package:todo_app_flutter/data/services/home_screen_providers.dart';
 import 'package:todo_app_flutter/presentation/screens/add_edit_task_screen.dart';
 import 'package:todo_app_flutter/presentation/screens/task_list_screen.dart';
 import 'package:todo_app_flutter/presentation/widgets/search_bar.dart';
 import 'package:todo_app_flutter/presentation/widgets/stats_section.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final searchQuery = ref.watch(taskSearchProvider);
+    final selectedFilter = ref.watch(taskFilterProvider);
 
-class _HomeScreenState extends State<HomeScreen> {
-  String _searchQuery = '';
-  TaskFilter _selectedFilter = TaskFilter.all;
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('To-Do List'),
@@ -26,13 +23,13 @@ class _HomeScreenState extends State<HomeScreen> {
             padding: const EdgeInsets.only(right: 12.0),
             child: ChoiceChip(
               label: const Text('All Tasks'),
-              selected: _selectedFilter == TaskFilter.all,
+              selected: selectedFilter == TaskFilter.all,
               onSelected: (_) {
-                setState(() => _selectedFilter = TaskFilter.all);
+                ref.read(taskFilterProvider.notifier).state = TaskFilter.all;
               },
               selectedColor: AppColors.lightBlue,
               labelStyle: TextStyle(
-                color: _selectedFilter == TaskFilter.all
+                color: selectedFilter == TaskFilter.all
                     ? Colors.white
                     : Colors.black,
               ),
@@ -43,27 +40,24 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Column(
         children: [
-          //Pending/ completed/Important tasks
           StatsSection(
-            selectedFilter: _selectedFilter,
+            selectedFilter: selectedFilter,
             onFilterChanged: (filter) {
-              setState(() => _selectedFilter = filter);
+              ref.read(taskFilterProvider.notifier).state = filter;
             },
           ),
-          //search bar
           TaskSearchBar(
             onSearchChanged: (query) {
-              setState(() => _searchQuery = query.trim().toLowerCase());
+              ref.read(taskSearchProvider.notifier).state = query
+                  .trim()
+                  .toLowerCase();
             },
           ),
-          //task list
           Expanded(
-            child: TaskList(searchQuery: _searchQuery, filter: _selectedFilter),
+            child: TaskList(searchQuery: searchQuery, filter: selectedFilter),
           ),
         ],
       ),
-
-      // Floating Action Button with "Add" tasks
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           Navigator.push(

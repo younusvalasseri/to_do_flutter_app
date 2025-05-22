@@ -22,25 +22,27 @@ class TaskModel {
     this.subtasks = const [],
   });
 
-  factory TaskModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-
+  factory TaskModel.fromMap(Map<String, dynamic> data, {required String id}) {
     return TaskModel(
-      id: doc.id,
+      id: id,
       title: data['title'] ?? '',
       description: data['description'],
-      dueDate: (data['dueDate'] as Timestamp?)?.toDate(),
+      dueDate: (data['dueDate'] is Timestamp)
+          ? (data['dueDate'] as Timestamp).toDate()
+          : DateTime.tryParse(data['dueDate'] ?? ''),
       completed: data['completed'] ?? false,
       important: data['important'] ?? false,
       assignedTo: data['assignedTo'],
       subtasks:
           (data['subtasks'] as List<dynamic>?)
-              ?.map((item) => SubTask.fromMap(item))
+              ?.map((e) => SubTask.fromMap(e))
               .toList() ??
           [],
     );
   }
-
+  factory TaskModel.fromFirestore(DocumentSnapshot doc) {
+    return TaskModel.fromMap(doc.data()! as Map<String, dynamic>, id: doc.id);
+  }
   Map<String, dynamic> toMap() {
     return {
       'title': title,
