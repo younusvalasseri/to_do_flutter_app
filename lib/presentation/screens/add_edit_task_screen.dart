@@ -18,9 +18,11 @@ class AddEditTaskScreen extends ConsumerWidget {
     final state = ref.watch(addEditTaskProvider);
     final notifier = ref.read(addEditTaskProvider.notifier);
 
-    if (taskId != null && taskData != null) {
-      final data = taskData!.data()! as Map<String, dynamic>;
-      notifier.setInitialData(TaskModel.fromMap(data, id: taskId!));
+    if (taskId != null && taskData != null && !state.initialized) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final data = taskData!.data()! as Map<String, dynamic>;
+        notifier.setInitialData(TaskModel.fromMap(data, id: taskId!));
+      });
     }
 
     return Scaffold(

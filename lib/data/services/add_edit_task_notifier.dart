@@ -9,6 +9,7 @@ class AddEditTaskState {
   final TextEditingController assignedController;
   final DateTime? dueDate;
   final bool important;
+  final bool initialized;
   final List<SubTask> subtasks;
 
   AddEditTaskState({
@@ -17,20 +18,26 @@ class AddEditTaskState {
     required this.assignedController,
     required this.dueDate,
     required this.important,
+    this.initialized = false,
     required this.subtasks,
   });
 
   AddEditTaskState copyWith({
+    TextEditingController? titleController,
+    TextEditingController? descController,
+    TextEditingController? assignedController,
     DateTime? dueDate,
     bool? important,
+    bool? initialized,
     List<SubTask>? subtasks,
   }) {
     return AddEditTaskState(
-      titleController: titleController,
-      descController: descController,
-      assignedController: assignedController,
+      titleController: titleController ?? this.titleController,
+      descController: descController ?? this.descController,
+      assignedController: assignedController ?? this.assignedController,
       dueDate: dueDate ?? this.dueDate,
       important: important ?? this.important,
+      initialized: initialized ?? this.initialized,
       subtasks: subtasks ?? this.subtasks,
     );
   }
@@ -50,13 +57,14 @@ class AddEditTaskNotifier extends Notifier<AddEditTaskState> {
   }
 
   void setInitialData(TaskModel task) {
-    state.titleController.text = task.title;
-    state.descController.text = task.description ?? '';
-    state.assignedController.text = task.assignedTo ?? '';
     state = state.copyWith(
+      titleController: TextEditingController(text: task.title),
+      descController: TextEditingController(text: task.description),
+      assignedController: TextEditingController(text: task.assignedTo),
       dueDate: task.dueDate,
       important: task.important,
       subtasks: task.subtasks,
+      initialized: true,
     );
   }
 

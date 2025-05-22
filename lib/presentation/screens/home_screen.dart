@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:todo_app_flutter/core/constants/app_colors.dart';
+import 'package:todo_app_flutter/data/services/add_edit_task_notifier.dart';
 import 'package:todo_app_flutter/data/services/home_screen_providers.dart';
 import 'package:todo_app_flutter/presentation/screens/add_edit_task_screen.dart';
 import 'package:todo_app_flutter/presentation/screens/task_list_screen.dart';
@@ -60,6 +61,7 @@ class HomeScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
+          ref.invalidate(addEditTaskProvider);
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const AddEditTaskScreen()),

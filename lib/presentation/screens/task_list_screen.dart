@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:todo_app_flutter/core/constants/app_colors.dart';
 import 'package:todo_app_flutter/core/constants/app_styles.dart';
+import 'package:todo_app_flutter/data/services/add_edit_task_notifier.dart';
 import 'package:todo_app_flutter/data/services/firestore_service.dart';
 import 'package:todo_app_flutter/presentation/screens/add_edit_task_screen.dart';
 import 'package:todo_app_flutter/presentation/widgets/stats_section.dart';
 import 'package:todo_app_flutter/presentation/widgets/task_details_modal.dart';
 
-class TaskList extends StatelessWidget {
+class TaskList extends ConsumerWidget {
   final String searchQuery;
   final TaskFilter filter;
   TaskList({super.key, required this.searchQuery, required this.filter});
@@ -35,7 +37,7 @@ class TaskList extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return StreamBuilder<QuerySnapshot>(
       stream: _firestoreService.getTaskStream(),
       builder: (context, snapshot) {
@@ -93,6 +95,7 @@ class TaskList extends StatelessWidget {
                   PopupMenuButton<String>(
                     onSelected: (value) async {
                       if (value == 'edit') {
+                        ref.invalidate(addEditTaskProvider);
                         Navigator.push(
                           context,
                           MaterialPageRoute(
