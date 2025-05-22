@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:todo_app_flutter/core/constants/app_colors.dart';
+import 'package:todo_app_flutter/core/constants/app_styles.dart';
+import 'package:todo_app_flutter/data/services/firestore_service.dart';
 import 'package:todo_app_flutter/presentation/screens/add_edit_task_screen.dart';
 import 'package:todo_app_flutter/presentation/widgets/stats_section.dart';
+import 'package:todo_app_flutter/presentation/widgets/task_details_modal.dart';
 
 class TaskList extends StatelessWidget {
   final String searchQuery;
   final TaskFilter filter;
+  TaskList({super.key, required this.searchQuery, required this.filter});
 
-  const TaskList({super.key, required this.searchQuery, required this.filter});
+  final FirestoreService _firestoreService = FirestoreService();
 
   DateTime? parseDueDate(dynamic value) {
     if (value is Timestamp) return value.toDate();
@@ -32,7 +37,7 @@ class TaskList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('tasks').snapshots(),
+      stream: _firestoreService.getTaskStream(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return const Center(child: Text('Error loading tasks'));
@@ -53,7 +58,7 @@ class TaskList extends StatelessWidget {
               padding: EdgeInsets.all(24.0),
               child: Text(
                 'You don’t have any tasks yet.\nStart adding tasks and manage your time effectively.',
-                style: TextStyle(fontSize: 16),
+                style: AppStyles.subtitle2,
                 textAlign: TextAlign.center,
               ),
             ),
@@ -78,10 +83,12 @@ class TaskList extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (task['completed'] == true)
-                    const Icon(Icons.check_circle, color: Colors.green),
+                    const Icon(Icons.check_circle, color: AppColors.success),
                   Icon(
                     task['important'] == true ? Icons.star : Icons.star_border,
-                    color: task['important'] == true ? Colors.orange : null,
+                    color: task['important'] == true
+                        ? AppColors.secondary
+                        : null,
                   ),
                   PopupMenuButton<String>(
                     onSelected: (value) async {
@@ -96,15 +103,9 @@ class TaskList extends StatelessWidget {
                           ),
                         );
                       } else if (value == 'delete') {
-                        await FirebaseFirestore.instance
-                            .collection('tasks')
-                            .doc(doc.id)
-                            .delete();
+                        await _firestoreService.deleteTask(doc.id);
                       } else if (value == 'complete') {
-                        await FirebaseFirestore.instance
-                            .collection('tasks')
-                            .doc(doc.id)
-                            .update({'completed': true});
+                        await _firestoreService.markTaskAsCompleted(doc.id);
                       }
                     },
                     itemBuilder: (context) => [
@@ -122,6 +123,18 @@ class TaskList extends StatelessWidget {
                   ),
                 ],
               ),
+              onTap: () {
+                showModalBottomSheet(
+                  context: context,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(20),
+                    ),
+                  ),
+                  isScrollControlled: true,
+                  builder: (_) => TaskDetailsModal(task: task),
+                );
+              },
             );
           },
         );

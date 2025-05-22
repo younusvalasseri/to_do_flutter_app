@@ -1,6 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:todo_app_flutter/core/utils/validators.dart';
+import 'package:todo_app_flutter/data/models/subtask_model.dart';
+import 'package:todo_app_flutter/data/models/task_model.dart';
+import 'package:todo_app_flutter/data/services/firestore_service.dart';
 
 class AddEditTaskScreen extends StatefulWidget {
   final String? taskId;
@@ -13,11 +17,12 @@ class AddEditTaskScreen extends StatefulWidget {
 }
 
 class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
+  List<SubTask> _subtasks = [];
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descController = TextEditingController();
   final _assignedController = TextEditingController();
-
+  final FirestoreService _firestoreService = FirestoreService();
   DateTime? _dueDate;
   bool _important = false;
 
@@ -41,6 +46,8 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
       }
 
       _important = data['important'] ?? false;
+      final subtasksData = data['subtasks'] as List<dynamic>? ?? [];
+      _subtasks = subtasksData.map((e) => SubTask.fromMap(e)).toList();
     }
   }
 
@@ -73,6 +80,10 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
               TextFormField(
                 controller: _assignedController,
                 decoration: const InputDecoration(labelText: 'Assigned To'),
+                validator: (value) => Validators.validateRequired(
+                  value,
+                  fieldName: 'Assigned To',
+                ),
               ),
 
               const SizedBox(height: 12),
@@ -108,6 +119,60 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                 value: _important,
                 onChanged: (v) => setState(() => _important = v ?? false),
               ),
+              const SizedBox(height: 16),
+              Text('Subtasks', style: Theme.of(context).textTheme.titleMedium),
+
+              ..._subtasks.map((subtask) {
+                final index = _subtasks.indexOf(subtask);
+                return Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        initialValue: subtask.title,
+                        decoration: const InputDecoration(
+                          hintText: 'Subtask title',
+                        ),
+                        onChanged: (value) {
+                          setState(() {
+                            _subtasks[index] = subtask.copyWith(title: value);
+                          });
+                        },
+                      ),
+                    ),
+                    Checkbox(
+                      value: subtask.completed,
+                      onChanged: (value) {
+                        setState(() {
+                          _subtasks[index] = subtask.copyWith(
+                            completed: value ?? false,
+                          );
+                        });
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: () {
+                        setState(() => _subtasks.removeAt(index));
+                      },
+                    ),
+                  ],
+                );
+              }),
+
+              TextButton.icon(
+                icon: const Icon(Icons.add),
+                label: const Text('Add Subtask'),
+                onPressed: () {
+                  setState(() {
+                    _subtasks.add(
+                      SubTask(
+                        id: DateTime.now().millisecondsSinceEpoch.toString(),
+                        title: '',
+                      ),
+                    );
+                  });
+                },
+              ),
 
               const SizedBox(height: 24),
 
@@ -116,24 +181,24 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                 child: const Text('Save Task'),
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
-                    final taskData = {
-                      'title': _titleController.text.trim(),
-                      'description': _descController.text.trim(),
-                      'assignedTo': _assignedController.text.trim(),
-                      'dueDate': _dueDate != null
-                          ? Timestamp.fromDate(_dueDate!)
-                          : null,
-                      'important': _important,
-                      // never overwrite completed flag when editing unless you want to
-                      'completed': widget.taskId == null
+                    final newTask = TaskModel(
+                      id: widget.taskId,
+                      title: _titleController.text.trim(),
+                      description: _descController.text.trim(),
+                      assignedTo: _assignedController.text.trim(),
+                      dueDate: _dueDate,
+                      important: _important,
+                      completed: widget.taskId == null
                           ? false
                           : (widget.taskData?['completed'] ?? false),
-                    };
+                      subtasks: _subtasks,
+                    );
 
-                    final col = FirebaseFirestore.instance.collection('tasks');
-                    widget.taskId == null
-                        ? await col.add(taskData)
-                        : await col.doc(widget.taskId).update(taskData);
+                    if (widget.taskId == null) {
+                      await _firestoreService.addTask(newTask);
+                    } else {
+                      await _firestoreService.updateTask(newTask);
+                    }
 
                     if (context.mounted) Navigator.pop(context);
                   }

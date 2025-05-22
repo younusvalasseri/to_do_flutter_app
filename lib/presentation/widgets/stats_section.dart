@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:todo_app_flutter/core/constants/app_colors.dart';
 
 enum TaskFilter { all, pending, completed, important }
 
@@ -30,7 +31,7 @@ class StatsSection extends StatelessWidget {
             label: Text('$label: $count'),
             selected: selectedFilter == filter,
             onSelected: (_) => onFilterChanged(filter),
-            selectedColor: Colors.blue.shade100,
+            selectedColor: AppColors.lightBlue,
           );
         }
 
@@ -39,7 +40,6 @@ class StatsSection extends StatelessWidget {
           child: Wrap(
             spacing: 8.0,
             children: [
-              buildFilterChip('All Tasks', TaskFilter.all, tasks.length),
               buildFilterChip('Pending', TaskFilter.pending, pending),
               buildFilterChip('Completed', TaskFilter.completed, completed),
               buildFilterChip('Important', TaskFilter.important, important),
