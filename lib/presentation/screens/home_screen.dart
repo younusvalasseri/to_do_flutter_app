@@ -5,6 +5,7 @@ import 'package:todo_app_flutter/data/services/add_edit_task_notifier.dart';
 import 'package:todo_app_flutter/data/services/home_screen_providers.dart';
 import 'package:todo_app_flutter/presentation/screens/add_edit_task_screen.dart';
 import 'package:todo_app_flutter/presentation/screens/task_list_screen.dart';
+import 'package:todo_app_flutter/presentation/widgets/home_app_bar.dart';
 import 'package:todo_app_flutter/presentation/widgets/search_bar.dart';
 import 'package:todo_app_flutter/presentation/widgets/stats_section.dart';
 
@@ -15,50 +16,38 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final searchQuery = ref.watch(taskSearchProvider);
     final selectedFilter = ref.watch(taskFilterProvider);
+    final selectedDate = ref.watch(selectedDateProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('To-Do List'),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12.0),
-            child: ChoiceChip(
-              label: const Text('All Tasks'),
-              selected: selectedFilter == TaskFilter.all,
-              onSelected: (_) {
-                ref.read(taskFilterProvider.notifier).state = TaskFilter.all;
-              },
-              selectedColor: AppColors.lightBlue,
-              labelStyle: TextStyle(
-                color: selectedFilter == TaskFilter.all
-                    ? Colors.white
-                    : Colors.black,
-              ),
-              backgroundColor: Colors.grey[200],
-            ),
-          ),
-        ],
-      ),
+      //App bar withtitle and All tasks button
+      appBar: const HomeAppBar(),
       body: Column(
         children: [
+          //Pending Completed Important buttons
           StatsSection(
             selectedFilter: selectedFilter,
             onFilterChanged: (filter) {
               ref.read(taskFilterProvider.notifier).state = filter;
             },
           ),
+          //search bar
           TaskSearchBar(
             onSearchChanged: (query) {
-              ref.read(taskSearchProvider.notifier).state = query
-                  .trim()
-                  .toLowerCase();
+              ref.read(taskSearchProvider.notifier).state = query;
+            },
+            selectedDate: selectedDate,
+            onDateChanged: (pickedDate) {
+              ref.read(selectedDateProvider.notifier).state = pickedDate;
             },
           ),
+
+          //Task list
           Expanded(
             child: TaskList(searchQuery: searchQuery, filter: selectedFilter),
           ),
         ],
       ),
+      //Add tasks
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           ref.invalidate(addEditTaskProvider);

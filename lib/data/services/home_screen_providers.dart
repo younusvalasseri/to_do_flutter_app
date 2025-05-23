@@ -6,3 +6,5 @@ final taskFilterProvider = StateProvider<TaskFilter>((ref) => TaskFilter.all);
 
 // Search query state provider
 final taskSearchProvider = StateProvider<String>((ref) => '');
+
+final selectedDateProvider = StateProvider<DateTime?>((ref) => null);

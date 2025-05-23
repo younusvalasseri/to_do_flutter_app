@@ -114,7 +114,7 @@ class AddEditTaskScreen extends ConsumerWidget {
                     ),
                   ],
                 );
-              }).toList(),
+              }),
               TextButton.icon(
                 icon: const Icon(Icons.add),
                 label: const Text('Add Subtask'),
