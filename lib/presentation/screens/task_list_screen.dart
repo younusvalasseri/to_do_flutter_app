@@ -8,7 +8,6 @@ import 'package:todo_app_flutter/data/services/add_edit_task_notifier.dart';
 import 'package:todo_app_flutter/data/services/firestore_service.dart';
 import 'package:todo_app_flutter/data/services/home_screen_providers.dart';
 import 'package:todo_app_flutter/presentation/screens/add_edit_task_screen.dart';
-import 'package:todo_app_flutter/presentation/widgets/date_filter_button.dart';
 import 'package:todo_app_flutter/presentation/widgets/stats_section.dart';
 import 'package:todo_app_flutter/presentation/widgets/task_details_modal.dart';
 
@@ -61,7 +60,7 @@ class TaskList extends ConsumerWidget {
               if (!snapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());
               }
-
+              //docs filtered by search
               final docs = snapshot.data!.docs.where((doc) {
                 final task = doc.data() as Map<String, dynamic>;
                 final title = task['title']?.toString().toLowerCase() ?? '';
@@ -72,6 +71,48 @@ class TaskList extends ConsumerWidget {
                     matchesDateFilter(dueDate, selectedDate);
               }).toList();
 
+              //sorting
+              docs.sort((a, b) {
+                final taskA = a.data()! as Map<String, dynamic>;
+                final taskB = b.data()! as Map<String, dynamic>;
+
+                final dueA = parseDueDate(taskA['dueDate']);
+                final dueB = parseDueDate(taskB['dueDate']);
+
+                final completedA = taskA['completed'] == true;
+                final completedB = taskB['completed'] == true;
+
+                if (completedA && !completedB) {
+                  return 1;
+                }
+                if (!completedA && completedB) return -1;
+
+                if (!completedA && !completedB) {
+                  final now = DateTime.now();
+
+                  final isLateA = dueA != null && dueA.isBefore(now);
+                  final isLateB = dueB != null && dueB.isBefore(now);
+
+                  if (isLateA && !isLateB) return -1;
+                  if (!isLateA && isLateB) return 1;
+
+                  final isUpcomingA = dueA != null && dueA.isAfter(now);
+                  final isUpcomingB = dueB != null && dueB.isAfter(now);
+
+                  if (isUpcomingA && !isUpcomingB) return -1;
+                  if (!isUpcomingA && isUpcomingB) return 1;
+
+                  // Fallback: sort by due date (earlier first)
+                  if (dueA != null && dueB != null) return dueA.compareTo(dueB);
+                  if (dueA == null && dueB != null) return 1;
+                  if (dueA != null && dueB == null) return -1;
+                  return 0;
+                }
+
+                // Both completed: sort by completion date (if available), or leave as is
+                return 0;
+              });
+              //UI message if the docs is empty
               if (docs.isEmpty) {
                 return const Center(
                   child: Padding(
@@ -84,7 +125,7 @@ class TaskList extends ConsumerWidget {
                   ),
                 );
               }
-
+              //tasks listed in list view builder
               return ListView.builder(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -101,7 +142,7 @@ class TaskList extends ConsumerWidget {
                       : task['important'] == true
                       ? AppColors.secondary.withOpacity(.10)
                       : Theme.of(context).cardColor;
-
+                  // smooth page-transition animation
                   return Hero(
                     tag: doc.id,
                     child: Card(
