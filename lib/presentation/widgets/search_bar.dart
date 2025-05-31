@@ -27,9 +27,12 @@ class TaskSearchBar extends ConsumerWidget {
           Expanded(
             child: TextField(
               decoration: InputDecoration(
+                fillColor: Colors.white,
+                filled: true,
                 hintText: 'Search tasks...',
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
+                  borderSide: BorderSide.none,
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),

@@ -47,6 +47,7 @@ class TaskList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final FirestoreService firestoreService = FirestoreService();
     final selectedDate = ref.watch(selectedDateProvider);
+    final taskAsyncValue = ref.watch(taskListProvider);
 
     return Column(
       children: [
@@ -61,11 +62,11 @@ class TaskList extends ConsumerWidget {
                 return const Center(child: CircularProgressIndicator());
               }
               //docs filtered by search
+
               final docs = snapshot.data!.docs.where((doc) {
                 final task = doc.data() as Map<String, dynamic>;
-                final title = task['title']?.toString().toLowerCase() ?? '';
                 final dueDate = parseDueDate(task['dueDate']);
-
+                final title = task['title']?.toString().toLowerCase() ?? '';
                 return title.contains(searchQuery.toLowerCase()) &&
                     matchesFilter(task, filter) &&
                     matchesDateFilter(dueDate, selectedDate);
@@ -126,143 +127,159 @@ class TaskList extends ConsumerWidget {
                 );
               }
               //tasks listed in list view builder
-              return ListView.builder(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                itemCount: docs.length,
-                itemBuilder: (context, index) {
-                  final doc = docs[index];
-                  final task = doc.data()! as Map<String, dynamic>;
-                  final due = parseDueDate(task['dueDate']);
+              return taskAsyncValue.when(
+                data: (tasks) => ListView.builder(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  itemCount: docs.length,
+                  itemBuilder: (context, index) {
+                    final doc = docs[index];
+                    final task = doc.data()! as Map<String, dynamic>;
+                    final due = parseDueDate(task['dueDate']);
+                    final DateTime now = DateTime.now();
+                    final DateTime? dueDate = parseDueDate(task['dueDate']);
+                    final bool isCompleted = task['completed'] == true;
+                    final bool isImportant = task['important'] == true;
+                    final bool isOverdue =
+                        dueDate != null &&
+                        dueDate.isBefore(now) &&
+                        !isCompleted;
+                    final Color cardColor = isCompleted
+                        ? AppColors.success.withOpacity(.3)
+                        : isOverdue
+                        ? Colors.red.withOpacity(.5)
+                        : isImportant
+                        ? AppColors.secondary.withOpacity(.3)
+                        : Theme.of(context).cardColor;
 
-                  final Color cardColor = task['completed'] == true
-                      ? AppColors.success.withOpacity(.12)
-                      : task['important'] == true
-                      ? AppColors.secondary.withOpacity(.10)
-                      : Theme.of(context).cardColor;
-                  // smooth page-transition animation
-                  return Hero(
-                    tag: doc.id,
-                    child: Card(
-                      color: cardColor,
-                      elevation: 3,
-                      margin: const EdgeInsets.only(bottom: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(16),
-                        onTap: () {
-                          showModalBottomSheet(
-                            context: context,
-                            shape: const RoundedRectangleBorder(
-                              borderRadius: BorderRadius.vertical(
-                                top: Radius.circular(20),
-                              ),
-                            ),
-                            isScrollControlled: true,
-                            builder: (_) => TaskDetailsModal(task: task),
-                          );
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 14,
-                          ),
-                          child: Row(
-                            children: [
-                              task['completed'] == true
-                                  ? const Icon(
-                                      Icons.check_circle,
-                                      color: AppColors.success,
-                                      size: 28,
-                                    )
-                                  : const Icon(
-                                      Icons.radio_button_unchecked,
-                                      color: AppColors.card,
-                                      size: 28,
-                                    ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      task['title'] ?? 'No Title',
-                                      style: AppStyles.subtitle1.copyWith(
-                                        decoration: task['completed'] == true
-                                            ? TextDecoration.lineThrough
-                                            : null,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      due != null
-                                          ? DateFormat.yMMMd().format(due)
-                                          : 'No Due Date',
-                                      style: AppStyles.subtitle2.copyWith(
-                                        color: Colors.grey[600],
-                                      ),
-                                    ),
-                                  ],
+                    // smooth page-transition animation
+                    return Hero(
+                      tag: doc.id,
+                      child: Card(
+                        color: cardColor,
+                        elevation: 3,
+                        margin: const EdgeInsets.only(bottom: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () {
+                            showModalBottomSheet(
+                              context: context,
+                              shape: const RoundedRectangleBorder(
+                                borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(20),
                                 ),
                               ),
-                              Icon(
-                                task['important'] == true
-                                    ? Icons.star
-                                    : Icons.star_border,
-                                color: task['important'] == true
-                                    ? AppColors.secondary
-                                    : Colors.grey[400],
-                              ),
-                              const SizedBox(width: 4),
-                              PopupMenuButton<String>(
-                                splashRadius: 18,
-                                onSelected: (value) async {
-                                  if (value == 'edit') {
-                                    ref.invalidate(addEditTaskProvider);
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => AddEditTaskScreen(
-                                          taskId: doc.id,
-                                          taskData: doc,
+                              isScrollControlled: true,
+                              builder: (_) => TaskDetailsModal(task: task),
+                            );
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
+                            child: Row(
+                              children: [
+                                task['completed'] == true
+                                    ? const Icon(
+                                        Icons.check_circle,
+                                        color: AppColors.success,
+                                        size: 28,
+                                      )
+                                    : const Icon(
+                                        Icons.radio_button_unchecked,
+                                        color: AppColors.card,
+                                        size: 28,
+                                      ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        task['title'] ?? 'No Title',
+                                        style: AppStyles.subtitle1.copyWith(
+                                          decoration: task['completed'] == true
+                                              ? TextDecoration.lineThrough
+                                              : null,
                                         ),
                                       ),
-                                    );
-                                  } else if (value == 'delete') {
-                                    await firestoreService.deleteTask(doc.id);
-                                  } else if (value == 'complete') {
-                                    await firestoreService.markTaskAsCompleted(
-                                      doc.id,
-                                    );
-                                  }
-                                },
-                                itemBuilder: (context) => [
-                                  const PopupMenuItem(
-                                    value: 'edit',
-                                    child: Text('Edit'),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        due != null
+                                            ? DateFormat.yMMMd().format(due)
+                                            : 'No Due Date',
+                                        style: AppStyles.subtitle2.copyWith(
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  const PopupMenuItem(
-                                    value: 'delete',
-                                    child: Text('Delete'),
-                                  ),
-                                  if (task['completed'] != true)
+                                ),
+                                Icon(
+                                  task['important'] == true
+                                      ? Icons.star
+                                      : Icons.star_border,
+                                  color: task['important'] == true
+                                      ? AppColors.secondary
+                                      : Colors.grey[400],
+                                ),
+                                const SizedBox(width: 4),
+                                PopupMenuButton<String>(
+                                  splashRadius: 18,
+                                  onSelected: (value) async {
+                                    if (value == 'edit') {
+                                      ref.invalidate(addEditTaskProvider);
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => AddEditTaskScreen(
+                                            taskId: doc.id,
+                                            taskData: doc,
+                                          ),
+                                        ),
+                                      );
+                                    } else if (value == 'delete') {
+                                      await firestoreService.deleteTask(doc.id);
+                                    } else if (value == 'complete') {
+                                      await firestoreService
+                                          .markTaskAsCompleted(doc.id);
+                                    }
+                                  },
+                                  itemBuilder: (context) => [
                                     const PopupMenuItem(
-                                      value: 'complete',
-                                      child: Text('Mark as Completed'),
+                                      value: 'edit',
+                                      child: Text('Edit'),
                                     ),
-                                ],
-                              ),
-                            ],
+                                    const PopupMenuItem(
+                                      value: 'delete',
+                                      child: Text('Delete'),
+                                    ),
+                                    if (task['completed'] != true)
+                                      const PopupMenuItem(
+                                        value: 'complete',
+                                        child: Text('Mark as Completed'),
+                                      ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
+                error: (err, stack) => Center(child: Text('Error: $err')),
+                loading: () => const Center(
+                  child: CircularProgressIndicator(color: Colors.orange),
+                ),
               );
             },
           ),

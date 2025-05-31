@@ -1,15 +1,29 @@
-class SubTask {
+import 'package:flutter/material.dart';
+
+class SubTaskModel {
   final String id;
   final String title;
   final bool completed;
+  final TextEditingController controller;
 
-  SubTask({required this.id, required this.title, this.completed = false});
+  SubTaskModel({
+    required this.id,
+    required this.title,
+    required this.completed,
+    TextEditingController? controller,
+  }) : controller = controller ?? TextEditingController(text: title);
 
-  factory SubTask.fromMap(Map<String, dynamic> map) {
-    return SubTask(
-      id: map['id'] ?? '',
-      title: map['title'] ?? '',
-      completed: map['completed'] ?? false,
+  SubTaskModel copyWith({
+    String? id,
+    String? title,
+    bool? completed,
+    TextEditingController? controller,
+  }) {
+    return SubTaskModel(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      completed: completed ?? this.completed,
+      controller: controller ?? this.controller,
     );
   }
 
@@ -17,11 +31,11 @@ class SubTask {
     return {'id': id, 'title': title, 'completed': completed};
   }
 
-  SubTask copyWith({String? title, bool? completed}) {
-    return SubTask(
-      id: id,
-      title: title ?? this.title,
-      completed: completed ?? this.completed,
+  factory SubTaskModel.fromMap(Map<String, dynamic> map) {
+    return SubTaskModel(
+      id: map['id'],
+      title: map['title'],
+      completed: map['completed'],
     );
   }
 }

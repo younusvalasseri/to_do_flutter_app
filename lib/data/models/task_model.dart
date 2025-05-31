@@ -9,7 +9,7 @@ class TaskModel {
   final bool completed;
   final bool important;
   final String? assignedTo;
-  final List<SubTask> subtasks;
+  final List<SubTaskModel> subtasks;
 
   TaskModel({
     required this.id,
@@ -22,7 +22,7 @@ class TaskModel {
     this.subtasks = const [],
   });
 
-  factory TaskModel.fromMap(Map<String, dynamic> data, {required String id}) {
+  factory TaskModel.fromMap(String id, Map<String, dynamic> data) {
     return TaskModel(
       id: id,
       title: data['title'] ?? '',
@@ -35,13 +35,13 @@ class TaskModel {
       assignedTo: data['assignedTo'],
       subtasks:
           (data['subtasks'] as List<dynamic>?)
-              ?.map((e) => SubTask.fromMap(e))
+              ?.map((e) => SubTaskModel.fromMap(e))
               .toList() ??
           [],
     );
   }
   factory TaskModel.fromFirestore(DocumentSnapshot doc) {
-    return TaskModel.fromMap(doc.data()! as Map<String, dynamic>, id: doc.id);
+    return TaskModel.fromMap(doc.id, doc.data() as Map<String, dynamic>);
   }
   Map<String, dynamic> toMap() {
     return {
@@ -62,7 +62,7 @@ class TaskModel {
     bool? completed,
     bool? important,
     String? assignedTo,
-    List<SubTask>? subtasks,
+    List<SubTaskModel>? subtasks,
   }) {
     return TaskModel(
       id: id,

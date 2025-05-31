@@ -21,31 +21,34 @@ class HomeScreen extends ConsumerWidget {
     return Scaffold(
       //App bar withtitle and All tasks button
       appBar: const HomeAppBar(),
-      body: Column(
-        children: [
-          //Pending Completed Important buttons
-          StatsSection(
-            selectedFilter: selectedFilter,
-            onFilterChanged: (filter) {
-              ref.read(taskFilterProvider.notifier).state = filter;
-            },
-          ),
-          //search bar
-          TaskSearchBar(
-            onSearchChanged: (query) {
-              ref.read(taskSearchProvider.notifier).state = query;
-            },
-            selectedDate: selectedDate,
-            onDateChanged: (pickedDate) {
-              ref.read(selectedDateProvider.notifier).state = pickedDate;
-            },
-          ),
+      body: Container(
+        decoration: const BoxDecoration(gradient: AppColors.backgroundGradient),
+        child: Column(
+          children: [
+            //Pending Completed Important buttons
+            StatsSection(
+              selectedFilter: selectedFilter,
+              onFilterChanged: (filter) {
+                ref.read(taskFilterProvider.notifier).state = filter;
+              },
+            ),
+            //search bar
+            TaskSearchBar(
+              onSearchChanged: (query) {
+                ref.read(taskSearchProvider.notifier).state = query;
+              },
+              selectedDate: selectedDate,
+              onDateChanged: (pickedDate) {
+                ref.read(selectedDateProvider.notifier).state = pickedDate;
+              },
+            ),
 
-          //Task list
-          Expanded(
-            child: TaskList(searchQuery: searchQuery, filter: selectedFilter),
-          ),
-        ],
+            //Task list
+            Expanded(
+              child: TaskList(searchQuery: searchQuery, filter: selectedFilter),
+            ),
+          ],
+        ),
       ),
       //Add tasks
       floatingActionButton: FloatingActionButton.extended(

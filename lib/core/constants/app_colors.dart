@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // Primary theme color
-  static const Color primary = Color(0xFF0A73B7); // Blue tone
+  static const Color primary = Color(0xFF1E6F9F); // Blue tone
   static const Color lightBlue = Color.fromARGB(204, 172, 207, 235);
   // Custom MaterialColor from primary
   static const MaterialColor primarySwatch = MaterialColor(
@@ -13,7 +13,7 @@ class AppColors {
       200: Color(0xFF80C3E2),
       300: Color(0xFF4DACD7),
       400: Color(0xFF2699CE),
-      500: Color(0xFF0A73B7), // primary
+      500: Color(0xFF1E6F9F), // primary
       600: Color(0xFF086AA7),
       700: Color(0xFF065B93),
       800: Color(0xFF044D80),
@@ -25,7 +25,7 @@ class AppColors {
 
   // Backgrounds
   static const Color background = Color(0xFFF5F5F5); // Light grey
-  static const Color card = Colors.white;
+  static const Color card = Color(0xFFFFFFFF);
 
   // Text
   static const Color textPrimary = Color(0xFF212121); // Dark grey
@@ -44,4 +44,12 @@ class AppColors {
 
   // Transparent overlays
   static const Color overlay = Colors.black54;
+  static const Color gray = Color.fromARGB(255, 133, 133, 133);
+  static const Color yellow = Color.fromARGB(255, 244, 232, 8);
+
+  static const LinearGradient backgroundGradient = LinearGradient(
+    colors: [Color(0xFF1A1A1A), gray],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
 }

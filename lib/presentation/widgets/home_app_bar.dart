@@ -13,7 +13,11 @@ class HomeAppBar extends ConsumerWidget implements PreferredSizeWidget {
     final selectedFilter = ref.watch(taskFilterProvider);
 
     return AppBar(
-      title: const Text('To-Do List'),
+      backgroundColor: Colors.black,
+      title: const Text(
+        'To-Do List',
+        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+      ),
       actions: [
         Padding(
           padding: const EdgeInsets.only(right: 12.0),
